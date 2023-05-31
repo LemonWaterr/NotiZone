@@ -17,6 +17,9 @@ interface ChannelDao {
     @Query("SELECT * from Channel where id = :id LIMIT 1")
     suspend fun getChannel(id: String): Channel
 
+    @Query("SELECT under_probation from Channel where id = :id LIMIT 1")
+    suspend fun getChannelProbationFlag(id: String): Boolean?
+
     @Query("SELECT * from Channel")
     fun getAllChannels(): Flow<List<Channel>>
 }

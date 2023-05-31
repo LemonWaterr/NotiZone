@@ -75,12 +75,13 @@ class NotificationListener : NotificationListenerService() {
         val originalChannel = notification.channelId?.let { notificationManagerCompat.getNotificationChannel(it) }
         val channelId: String = originalChannel?.id ?: notification.extras.getString(Notification.EXTRA_TITLE, "")
 
-        val channel = runBlocking{
+        val isChannelUnderProbation = runBlocking{
             withContext(Dispatchers.Default) {
-                dao.getChannel(channelId)
+                dao.getChannelProbationFlag(channelId)
             }
         }
-        return channel.under_probation
+
+        return isChannelUnderProbation ?: false
     }
 
     private fun makePutUnderProbationAction(notification: Notification): NotificationCompat.Action {

@@ -4,6 +4,7 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Context
 import android.os.Bundle
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
@@ -24,6 +25,8 @@ class MainActivity : ComponentActivity() {
                 Surface(
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colors.background
+
+
                 ) {
                     Greeting("Android")
                 }
@@ -31,12 +34,13 @@ class MainActivity : ComponentActivity() {
 
             FloatingActionButton(
                 content = { Icon(painterResource(id = R.drawable.ic_probation_notification), contentDescription = null) },
-                onClick = { postTestNotification() }
+                onClick = { Toast.makeText(this, "This is a quick popup message", Toast.LENGTH_SHORT).show(); postTestNotification() }
             )
         }
     }
 
     private fun postTestNotification() {
+
         val channel = NotificationChannel("test_channel_A", "testChannelA", NotificationManager.IMPORTANCE_DEFAULT).apply {
             description = "test_channel_A_description"
         }
