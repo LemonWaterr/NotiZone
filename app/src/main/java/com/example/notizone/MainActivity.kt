@@ -28,7 +28,7 @@ class MainActivity : ComponentActivity() {
 
 
                 ) {
-                    Greeting("Android")
+                    MyApp()
                 }
             }
 
@@ -58,10 +58,11 @@ class MainActivity : ComponentActivity() {
 }
 
 @Composable
-fun Greeting(name: String) {
-    Text(text = "Hello $name!")
+fun MyApp() {
+    Text(text = "Hello seo!")
 }
 
+/*
 @Preview(showBackground = true)
 @Composable
 fun DefaultPreview() {
@@ -69,3 +70,4 @@ fun DefaultPreview() {
         Greeting("Android")
     }
 }
+*/
