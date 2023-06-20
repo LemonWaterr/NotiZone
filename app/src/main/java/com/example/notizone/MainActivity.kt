@@ -12,7 +12,6 @@ import androidx.compose.material.*
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.core.app.NotificationCompat
 import com.example.notizone.ui.theme.NotiZoneTheme
 
@@ -33,7 +32,7 @@ class MainActivity : ComponentActivity() {
             }
 
             FloatingActionButton(
-                content = { Icon(painterResource(id = R.drawable.ic_probation_notification), contentDescription = null) },
+                content = { Icon(painterResource(id = R.drawable.ic_semiblock_notification), contentDescription = null) },
                 onClick = { Toast.makeText(this, "This is a quick popup message", Toast.LENGTH_SHORT).show(); postTestNotification() }
             )
         }

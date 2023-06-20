@@ -7,5 +7,5 @@ import androidx.room.PrimaryKey;
 data class Channel(
     @PrimaryKey val id: String,
     val name: String,
-    val under_probation: Boolean
+    val semi_blocked: Boolean
 )

@@ -22,7 +22,7 @@ class NotificationListener : NotificationListenerService() {
     override fun onCreate() {
         super.onCreate()
         notificationManagerCompat = NotificationManagerCompat.from(this)
-        prepareProbationChannel()
+        prepareSemiBlockChannel()
     }
 
     override fun onNotificationPosted(statusBarNotification: StatusBarNotification) {
@@ -37,20 +37,20 @@ class NotificationListener : NotificationListenerService() {
         val notificationBuilderRecovered = NotificationCompat.Builder(this, notification)
             .setAutoCancel(true)
 
-        if(checkIfUnderProbation(notification)) {
+        if(checkIfSemiBlocked(notification)) {
             notificationBuilderRecovered
-                .addAction(makeReleaseFromProbationAction(notification))
-                .setChannelId(_probationChannelId)
+                .addAction(makeReleaseAction(notification))
+                .setChannelId(_semiBlockChannelId)
         }else{
             notificationBuilderRecovered
-                .addAction(makePutUnderProbationAction(notification))
+                .addAction(makeSemiBlockAction(notification))
         }
 
         notificationManagerCompat.notify(statusBarNotification.id, notificationBuilderRecovered.build())
     }
 
-    private fun prepareProbationChannel(){
-        val channel = NotificationChannel(_probationChannelId, "ProbationChannel", NotificationManager.IMPORTANCE_LOW).apply {
+    private fun prepareSemiBlockChannel(){
+        val channel = NotificationChannel(_semiBlockChannelId, "ProbationChannel", NotificationManager.IMPORTANCE_LOW).apply {
             description = "Notifications that are naughty but unsure to be blocked are sent to this channel"
         }
         notificationManagerCompat.createNotificationChannel(channel)
@@ -69,31 +69,31 @@ class NotificationListener : NotificationListenerService() {
         return ignoreCriteria.any { it }
     }
 
-    private fun checkIfUnderProbation(notification: Notification): Boolean {
+    private fun checkIfSemiBlocked(notification: Notification): Boolean {
         val dao = NotiDatabase.getDatabase(this).channelDao()
 
         val originalChannel = notification.channelId?.let { notificationManagerCompat.getNotificationChannel(it) }
         val channelId: String = originalChannel?.id ?: notification.extras.getString(Notification.EXTRA_TITLE, "")
 
-        val isChannelUnderProbation = runBlocking{
+        val isChannelSemiBlocked = runBlocking{
             withContext(Dispatchers.Default) {
-                dao.getChannelProbationFlag(channelId)
+                dao.getChannelSemiBlockedFlag(channelId)
             }
         }
 
-        return isChannelUnderProbation ?: false
+        return isChannelSemiBlocked ?: false
     }
 
-    private fun makePutUnderProbationAction(notification: Notification): NotificationCompat.Action {
-        val intent = makeIntentForAction(_putUnderProbationActionName, notification)
+    private fun makeSemiBlockAction(notification: Notification): NotificationCompat.Action {
+        val intent = makeIntentForAction(_semiBlockActionName, notification)
         val pendingIntent = PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
-        return NotificationCompat.Action.Builder(R.drawable.ic_probation_notification,"Put Under Probation", pendingIntent).build()
+        return NotificationCompat.Action.Builder(R.drawable.ic_semiblock_notification,"Semi-Block", pendingIntent).build()
     }
 
-    private fun makeReleaseFromProbationAction(notification: Notification): NotificationCompat.Action {
-        val intent = makeIntentForAction(_releaseFromProbationActionName, notification)
+    private fun makeReleaseAction(notification: Notification): NotificationCompat.Action {
+        val intent = makeIntentForAction(_releaseActionName, notification)
         val pendingIntent = PendingIntent.getBroadcast(this, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
-        return NotificationCompat.Action.Builder(R.drawable.ic_block_notification,"Release From Probation", pendingIntent).build()
+        return NotificationCompat.Action.Builder(R.drawable.ic_block_notification,"Release", pendingIntent).build()
     }
 
     private fun makeIntentForAction(actionName : String, notification: Notification): Intent {
@@ -106,7 +106,7 @@ class NotificationListener : NotificationListenerService() {
     }
 
     private val _repostedFlag = "repostedByNotiBoy"
-    private val _probationChannelId = "probation_channel"
-    private val _putUnderProbationActionName = "PUT_UNDER_PROBATION"
-    private val _releaseFromProbationActionName = "RELEASE_FROM_PROBATION"
+    private val _semiBlockChannelId = "semi_block_channel"
+    private val _semiBlockActionName = "SEMI_BLOCK"
+    private val _releaseActionName = "RELEASE"
 }
