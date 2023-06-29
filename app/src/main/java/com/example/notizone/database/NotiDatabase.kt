@@ -5,10 +5,11 @@ import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 
-@Database(entities = [Channel::class], version = 1, exportSchema = false)
+@Database(entities = [Channel::class, Notification::class], version = 1, exportSchema = false)
 abstract class NotiDatabase : RoomDatabase() {
 
     abstract fun channelDao(): ChannelDao
+    abstract fun notificationDao(): NotificationDao
 
     companion object {
         // Singleton prevents multiple instances of database opening at the

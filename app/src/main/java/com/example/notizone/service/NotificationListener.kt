@@ -4,16 +4,19 @@ import android.app.Notification
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
+import android.content.Context
 import android.content.Intent
+import android.content.pm.ApplicationInfo
+import android.content.pm.PackageManager
 import android.service.notification.NotificationListenerService
 import android.service.notification.StatusBarNotification
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import com.example.notizone.R
+import com.example.notizone.database.Channel
+import com.example.notizone.database.Notification as DBNotification
 import com.example.notizone.database.NotiDatabase
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.runBlocking
-import kotlinx.coroutines.withContext
+import kotlinx.coroutines.*
 
 class NotificationListener : NotificationListenerService() {
 
@@ -31,13 +34,14 @@ class NotificationListener : NotificationListenerService() {
         if(isIgnoredNotificationType((statusBarNotification)))
             return
 
+        saveNotification(statusBarNotification)
         val notification = statusBarNotification.notification
 
         notification.extras.putBoolean("repostedByNotiBoy", true)
         val notificationBuilderRecovered = NotificationCompat.Builder(this, notification)
             .setAutoCancel(true)
 
-        if(checkIfSemiBlocked(notification)) {
+        if(checkIfSemiBlocked(statusBarNotification)) {
             notificationBuilderRecovered
                 .addAction(makeReleaseAction(notification))
                 .setChannelId(_semiBlockChannelId)
@@ -47,6 +51,37 @@ class NotificationListener : NotificationListenerService() {
         }
 
         notificationManagerCompat.notify(statusBarNotification.id, notificationBuilderRecovered.build())
+    }
+
+    private fun getAppNameFromPackage(context: Context, packageName: String): String {
+        val packageManager = context.applicationContext.packageManager
+        return try{
+            val applicationInfo = packageManager.getApplicationInfo(packageName, 0)
+            packageManager.getApplicationLabel(applicationInfo).toString()
+        }catch(e: Exception){
+            packageName
+        }
+
+    }
+
+    private fun saveNotification(notification: StatusBarNotification){
+        val appName = getAppNameFromPackage(this, notification.packageName)
+
+        val dao = NotiDatabase.getDatabase(this).notificationDao()
+        GlobalScope.launch {
+            notification.let{
+                dao.insert(DBNotification(
+                    it.id,
+                    it.packageName,
+                    appName,
+                    it.notification.extras.getString(Notification.EXTRA_TITLE) ?: "default_notification_title",
+                    it.notification.extras.getString(Notification.EXTRA_TEXT) ?: "default notification text",
+                    it.notification.extras.getString(Notification.EXTRA_BIG_TEXT) ?: "default notification big text",
+                    it.postTime,
+                    it.notification.channelId
+                ))
+            }
+        }
     }
 
     private fun prepareSemiBlockChannel(){
@@ -69,11 +104,13 @@ class NotificationListener : NotificationListenerService() {
         return ignoreCriteria.any { it }
     }
 
-    private fun checkIfSemiBlocked(notification: Notification): Boolean {
+    private fun checkIfSemiBlocked(statusBarNotification: StatusBarNotification): Boolean {
+        val notification = statusBarNotification.notification
         val dao = NotiDatabase.getDatabase(this).channelDao()
 
+        // TODO: debug and find why I decided to use notiicationManagerCompat here, rather than using notification.channelId directly.
         val originalChannel = notification.channelId?.let { notificationManagerCompat.getNotificationChannel(it) }
-        val channelId: String = originalChannel?.id ?: notification.extras.getString(Notification.EXTRA_TITLE, "")
+        val channelId: String = originalChannel?.id ?: statusBarNotification.packageName
 
         val isChannelSemiBlocked = runBlocking{
             withContext(Dispatchers.Default) {
